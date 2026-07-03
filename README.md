@@ -18,7 +18,8 @@ Uma aplicação web moderna e reativa de Planning Poker desenvolvida com **Blazo
 - 🎨 **Design Moderno**: Interface limpa e responsiva com Tailwind CSS
 - 🔒 **Thread-Safe**: Serviço Singleton com suporte completo a concorrência
 - 🎯 **Sequências Customizáveis**: Fibonacci, Modified Fibonacci, T-Shirt Sizes ou crie sua própria
-- 📊 **Cálculo Automático**: Média aritmética dos votos numéricos
+- � **Instruções de Referência**: Campo customizável para exibir guias de estimativa em destaque
+- �📊 **Cálculo Automático**: Média aritmética dos votos numéricos
 - 🎭 **Avatares Dinâmicos**: Geração automática de avatares via DiceBear API
 - ⏰ **Limpeza Automática**: Salas inativas são removidas automaticamente após 2 horas
 
@@ -139,9 +140,12 @@ O projeto está otimizado para **Fedora** com **Podman** e **SELinux**:
    - **Seu Nome**: Como você será identificado
    - **Nome do Time**: Identificação da equipe
    - **Sprint**: Nome ou número da sprint
+   - **Instruções de Referência**: Guia de estimativa (vem com um padrão sugerido que pode ser editado)
    - **Sequência de Votação**: Escolha entre as opções pré-definidas
 3. Clique em "Criar Sala de Planning Poker"
 4. Você será redirecionado para a sala como Moderador
+
+> 💡 **Dica**: As instruções de referência aparecem em destaque com fundo amarelo durante a votação, ajudando o time a ter consistência nas estimativas.
 
 ### 2️⃣ Convidar Participantes
 

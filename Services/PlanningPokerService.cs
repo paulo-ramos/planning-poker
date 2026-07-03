@@ -28,13 +28,14 @@ public class PlanningPokerService
     /// <summary>
     /// Cria uma nova sala de Planning Poker
     /// </summary>
-    public Room CreateRoom(string teamName, string sprintName, List<string> votingSequence, string moderatorName)
+    public Room CreateRoom(string teamName, string sprintName, List<string> votingSequence, string moderatorName, string instructions = "")
     {
         var room = new Room
         {
             TeamName = teamName,
             SprintName = sprintName,
-            VotingSequence = votingSequence
+            VotingSequence = votingSequence,
+            Instructions = instructions
         };
 
         var moderator = new User

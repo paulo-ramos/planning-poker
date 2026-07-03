@@ -72,6 +72,17 @@
                 </div>
             }
 
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-2">
+                    📋 Instruções de Referência
+                </label>
+                <InputTextArea @bind-Value="formModel.Instructions"
+                               class="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-purple-500 focus:ring-4 focus:ring-purple-500/20 outline-none transition-all font-mono text-sm"
+                               rows="7"
+                               placeholder="Instruções para referência durante a votação" />
+                <p class="text-xs text-gray-500 mt-1">Estas instruções ficarão visíveis em destaque durante a votação</p>
+            </div>
+
             <button type="submit"
                     class="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-bold py-4 px-6 rounded-xl shadow-lg hover:shadow-xl transform hover:scale-[1.02] active:scale-[0.98] transition-all duration-200">
                 🎯 Criar Sala de Planning Poker
@@ -126,7 +137,8 @@
                 formModel.TeamName,
                 formModel.SprintName,
                 sequence,
-                formModel.UserName
+                formModel.UserName,
+                formModel.Instructions
             );
 
             var moderator = room.GetModerator();
@@ -173,6 +185,13 @@
 
         [Required(ErrorMessage = "Por favor, informe o nome/número da sprint")]
         public string SprintName { get; set; } = string.Empty;
+
+        public string Instructions { get; set; } = @"1 ----- 1/2 dia
+2 ----- 1 dia
+3 ----- 2 dias
+5 ----- 3 a 4 dias
+8 ----- 5 a 8 dias
+13 ---- Considere dividir em tarefas menores";
 
         public string SequenceType { get; set; } = "fibonacci-13";
 

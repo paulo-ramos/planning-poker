@@ -23,6 +23,11 @@ public class Room
     public string SprintName { get; set; } = string.Empty;
 
     /// <summary>
+    /// Instruções para referência durante a votação
+    /// </summary>
+    public string Instructions { get; set; } = string.Empty;
+
+    /// <summary>
     /// Sequência de valores disponíveis para votação (ex: ["1", "2", "3", "5", "8", "13"])
     /// </summary>
     public List<string> VotingSequence { get; set; } = new();

@@ -204,6 +204,17 @@ else if (currentUser != null)
                         }
                     </div>
                 </div>
+
+                <!-- Instruções de Referência -->
+                @if (!string.IsNullOrWhiteSpace(room.Instructions))
+                {
+                    <div class="bg-gradient-to-br from-yellow-100 to-yellow-200 rounded-2xl shadow-xl p-6 border-2 border-yellow-400 mt-6">
+                        <h2 class="text-lg font-bold text-yellow-900 mb-3 flex items-center gap-2">
+                            📋 Instruções de Referência
+                        </h2>
+                        <pre class="text-sm text-yellow-900 font-mono whitespace-pre-wrap leading-relaxed">@room.Instructions</pre>
+                    </div>
+                }
             </div>
         </div>
 
