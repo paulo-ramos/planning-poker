@@ -21,6 +21,7 @@ Uma aplicação web moderna e reativa de Planning Poker desenvolvida com **Blazo
 - � **Instruções de Referência**: Campo customizável para exibir guias de estimativa em destaque
 - �📊 **Cálculo Automático**: Média aritmética dos votos numéricos
 - 🎭 **Avatares Dinâmicos**: Geração automática de avatares via DiceBear API
+- 📈 **Google Analytics**: Integração com Google Analytics 4 para métricas de uso
 - ⏰ **Limpeza Automática**: Salas inativas são removidas automaticamente após 2 horas
 
 ## 🏗️ Arquitetura
