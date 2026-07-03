@@ -1,0 +1,389 @@
+@page "/room/{roomId}"
+@inject PlanningPokerService PokerService
+@inject NavigationManager Navigation
+@inject IJSRuntime JSRuntime
+@implements IDisposable
+
+<PageTitle>Planning Poker - @room?.TeamName</PageTitle>
+
+@if (room == null)
+{
+    <div class="max-w-2xl mx-auto">
+        <div class="bg-white/95 backdrop-blur-sm rounded-3xl shadow-2xl p-8 text-center">
+            <div class="text-6xl mb-4">😕</div>
+            <h1 class="text-3xl font-bold text-gray-800 mb-4">Sala não encontrada</h1>
+            <p class="text-gray-600 mb-6">A sala que você está tentando acessar não existe ou foi encerrada.</p>
+            <a href="/" class="inline-block bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-6 rounded-xl transition-colors">
+                🏠 Voltar para Home
+            </a>
+        </div>
+    </div>
+}
+else if (currentUser == null)
+{
+    <div class="max-w-md mx-auto">
+        <div class="bg-white/95 backdrop-blur-sm rounded-3xl shadow-2xl p-8">
+            <div class="text-center mb-6">
+                <div class="text-5xl mb-4">👋</div>
+                <h1 class="text-3xl font-bold text-gray-800 mb-2">Entrar na Sala</h1>
+                <p class="text-gray-600">@room.TeamName - @room.SprintName</p>
+            </div>
+
+            <EditForm Model="@joinModel" OnValidSubmit="JoinRoom" class="space-y-4">
+                <DataAnnotationsValidator />
+
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">
+                        Seu Nome
+                    </label>
+                    <InputText @bind-Value="joinModel.Name"
+                               class="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-purple-500 focus:ring-4 focus:ring-purple-500/20 outline-none transition-all"
+                               placeholder="Digite seu nome" />
+                    <ValidationMessage For="@(() => joinModel.Name)" class="text-red-500 text-sm mt-1" />
+                </div>
+
+                <button type="submit"
+                        class="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-bold py-3 px-6 rounded-xl shadow-lg hover:shadow-xl transform hover:scale-[1.02] transition-all">
+                    🚀 Entrar na Sala
+                </button>
+            </EditForm>
+        </div>
+    </div>
+}
+else if (currentUser != null)
+{
+    <div class="max-w-7xl mx-auto space-y-6">
+        <!-- Header da Sala -->
+        <div class="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl p-6 border border-white/20">
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-800">@room.TeamName</h1>
+                    <p class="text-gray-600">@room.SprintName - Rodada #@room.RoundNumber</p>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="px-4 py-2 bg-purple-100 text-purple-700 rounded-xl font-semibold">
+                        👥 @room.Users.Count @(room.Users.Count == 1 ? "participante" : "participantes")
+                    </span>
+                    <button @onclick="CopyRoomLink"
+                            class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl font-semibold transition-colors">
+                        🔗 Copiar Link
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid md:grid-cols-3 gap-6">
+            <!-- Painel de Votação -->
+            <div class="md:col-span-2 space-y-6">
+                <!-- Cards de Votação -->
+                <div class="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl p-6 border border-white/20">
+                    <h2 class="text-xl font-bold text-gray-800 mb-4">🎴 Escolha sua estimativa</h2>
+
+                    @if (!room.VotesRevealed)
+                    {
+                        <div class="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-7 gap-3">
+                            @foreach (var value in room.VotingSequence)
+                            {
+                                var isSelected = room.Votes.ContainsKey(currentUser.Id) && room.Votes[currentUser.Id].Value == value;
+                                var cardClass = isSelected
+                                    ? "bg-gradient-to-br from-purple-600 to-indigo-600 text-white scale-110 shadow-xl"
+                                    : "bg-white hover:bg-gradient-to-br hover:from-purple-50 hover:to-indigo-50 text-gray-800 hover:scale-105 hover:shadow-lg";
+
+                                <button @onclick="() => CastVote(value)"
+                                        class="@cardClass aspect-[2/3] rounded-xl border-2 border-gray-200 font-bold text-2xl transition-all duration-200 flex items-center justify-center">
+                                    @value
+                                </button>
+                            }
+                        </div>
+
+                        @if (room.Votes.ContainsKey(currentUser.Id))
+                        {
+                            <div class="mt-4 p-4 bg-green-100 border-2 border-green-300 rounded-xl text-green-700 text-center">
+                                ✅ Você votou! Aguardando os outros participantes...
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <!-- Votos Revelados -->
+                        <div class="space-y-4">
+                            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                                @foreach (var user in GetSortedUsersForReveal())
+                                {
+                                    var hasVoted = room.Votes.ContainsKey(user.Id);
+                                    var voteValue = hasVoted ? room.Votes[user.Id].Value : "";
+                                    var isAbsentee = voteValue == "☕" || voteValue == "🚽";
+                                    var cardStyle = isAbsentee
+                                        ? "bg-gradient-to-br from-orange-50 to-yellow-50 border-orange-300"
+                                        : "bg-gradient-to-br from-purple-50 to-indigo-50 border-purple-200";
+
+                                    <div class="@cardStyle rounded-xl p-4 border-2">
+                                        <div class="flex items-center gap-2 mb-2">
+                                            <img src="@user.AvatarUrl" alt="@user.Name" class="w-8 h-8 rounded-full" />
+                                            <span class="font-semibold text-sm text-gray-800 truncate">@user.Name</span>
+                                        </div>
+                                        <div class="text-center">
+                                            @if (hasVoted)
+                                            {
+                                                <div class="text-3xl font-bold @(isAbsentee ? "text-orange-600" : "text-purple-600")">
+                                                    @voteValue
+                                                </div>
+                                                @if (isAbsentee)
+                                                {
+                                                    <div class="text-xs text-orange-600 mt-1">Ausente</div>
+                                                }
+                                            }
+                                            else
+                                            {
+                                                <div class="text-gray-400 text-sm">Não votou</div>
+                                            }
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+
+                            @if (room.GetVotesAverage().HasValue)
+                            {
+                                <div class="bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-2xl p-6 text-center">
+                                    <div class="text-sm font-semibold mb-2">📊 MÉDIA DOS VOTOS</div>
+                                    <div class="text-5xl font-bold">@room.GetVotesAverage()?.ToString("F1")</div>
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
+
+                <!-- Ações do Moderador -->
+                @if (currentUser.IsModerator)
+                {
+                    <div class="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl p-6 border border-white/20">
+                        <h2 class="text-xl font-bold text-gray-800 mb-4">🎮 Controles do Moderador</h2>
+                        <div class="flex flex-wrap gap-3">
+                            @if (!room.VotesRevealed)
+                            {
+                                <button @onclick="RevealVotes"
+                                        class="flex-1 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-bold py-3 px-6 rounded-xl shadow-lg transition-all">
+                                    👁️ Revelar Votos @(room.AllUsersVoted() ? "✅" : $"({room.Votes.Count}/{room.Users.Count(u => u.Value.IsConnected)})")
+                                </button>
+                            }
+                            <button @onclick="ResetVoting"
+                                    class="flex-1 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white font-bold py-3 px-6 rounded-xl shadow-lg transition-all">
+                                🔄 Nova Rodada
+                            </button>
+                        </div>
+                    </div>
+                }
+            </div>
+
+            <!-- Painel de Participantes -->
+            <div class="md:col-span-1">
+                <div class="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl p-6 border border-white/20 sticky top-4">
+                    <h2 class="text-xl font-bold text-gray-800 mb-4">👥 Participantes</h2>
+                    <div class="space-y-3">
+                        @foreach (var user in room.Users.Values.OrderByDescending(u => u.IsModerator))
+                        {
+                            var hasVoted = room.Votes.ContainsKey(user.Id);
+                            var statusColor = room.VotesRevealed ? "bg-gray-200" : (hasVoted ? "bg-green-500" : "bg-yellow-400");
+                            var isCurrentUser = user.Id == currentUser?.Id;
+                            var canShoot = !isCurrentUser && !hasVoted && !room.VotesRevealed;
+                            var cursorClass = canShoot ? "cursor-pointer hover:scale-105 hover:shadow-lg" : "opacity-50 cursor-not-allowed";
+
+                            <div data-user-id="@user.Id"
+                                 @onclick="() => FireCannonAt(user.Id, hasVoted)"
+                                 class="@cursorClass flex items-center gap-3 p-3 rounded-xl bg-gradient-to-r from-purple-50 to-indigo-50 border border-purple-200 transition-all">
+                                <img src="@user.AvatarUrl" alt="@user.Name" class="w-10 h-10 rounded-full" />
+                                <div class="flex-1 min-w-0">
+                                    <div class="font-semibold text-gray-800 truncate">@user.Name</div>
+                                    @if (user.IsModerator)
+                                    {
+                                        <div class="text-xs text-purple-600 font-semibold">👑 Moderador</div>
+                                    }
+                                </div>
+                                <div class="@statusColor w-3 h-3 rounded-full" title="@(hasVoted ? "Votou" : "Aguardando")"></div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Canhão Fixo no Canto Inferior Esquerdo -->
+        <div class="fixed bottom-24 left-8 z-50">
+            <div id="cannon-icon" class="text-6xl transform -rotate-45 drop-shadow-2xl" title="Clique em um participante para atirar!">
+                💣
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter]
+    public string RoomId { get; set; } = string.Empty;
+
+    [SupplyParameterFromQuery]
+    public string? UserId { get; set; }
+
+    private Models.Room? room;
+    private Models.User? currentUser;
+    private JoinRoomModel joinModel = new();
+    private string? lastCannonShotId;
+
+    protected override void OnInitialized()
+    {
+        // Verifica se a sala existe imediatamente
+        room = PokerService.GetRoom(RoomId);
+
+        // Se vier userId na URL, tenta recuperar o usuário
+        if (room != null && !string.IsNullOrEmpty(UserId))
+        {
+            room.Users.TryGetValue(UserId, out currentUser);
+        }
+
+        PokerService.RoomUpdated += OnRoomUpdated;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && room != null && currentUser == null)
+        {
+            // Tenta recuperar userId do sessionStorage
+            var storedUserId = await JSRuntime.InvokeAsync<string?>("getUserId", RoomId);
+
+            if (!string.IsNullOrEmpty(storedUserId) && room.Users.TryGetValue(storedUserId, out currentUser))
+            {
+                await InvokeAsync(StateHasChanged);
+            }
+
+            // Se veio userId na URL, salva no sessionStorage e limpa a URL
+            if (!string.IsNullOrEmpty(UserId))
+            {
+                await JSRuntime.InvokeVoidAsync("saveUserId", RoomId, UserId);
+                Navigation.NavigateTo($"/room/{RoomId}", forceLoad: false);
+            }
+        }
+    }
+
+    private async void OnRoomUpdated(string roomId)
+    {
+        if (roomId == RoomId)
+        {
+            var updatedRoom = PokerService.GetRoom(RoomId);
+
+            // Detecta novo disparo de canhão
+            if (updatedRoom?.LastCannonShot != null &&
+                updatedRoom.LastCannonShot.Id != lastCannonShotId)
+            {
+                lastCannonShotId = updatedRoom.LastCannonShot.Id;
+
+                // Anima o disparo
+                await JSRuntime.InvokeVoidAsync("animateCannonShot",
+                    updatedRoom.LastCannonShot.FromUserId,
+                    updatedRoom.LastCannonShot.ToUserId,
+                    updatedRoom.LastCannonShot.Projectile);
+            }
+
+            room = updatedRoom;
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    private async Task JoinRoom()
+    {
+        if (room == null) return;
+
+        currentUser = PokerService.JoinRoom(RoomId, joinModel.Name);
+
+        if (currentUser != null)
+        {
+            // Salva userId no sessionStorage
+            await JSRuntime.InvokeVoidAsync("saveUserId", RoomId, currentUser.Id);
+
+            // Atualiza a UI para mostrar a sala
+            StateHasChanged();
+        }
+    }
+
+    private void CastVote(string value)
+    {
+        if (currentUser == null || room == null || room.VotesRevealed) return;
+
+        PokerService.Vote(RoomId, currentUser.Id, value);
+    }
+
+    private void RevealVotes()
+    {
+        PokerService.RevealVotes(RoomId);
+    }
+
+    private void ResetVoting()
+    {
+        PokerService.ResetVoting(RoomId);
+    }
+
+    private void FireCannonAt(string targetUserId, bool targetHasVoted)
+    {
+        // Não pode atirar em si mesmo, em quem já votou, ou depois dos votos revelados
+        if (currentUser == null || room == null ||
+            targetUserId == currentUser.Id ||
+            targetHasVoted ||
+            room.VotesRevealed)
+            return;
+
+        PokerService.FireCannon(RoomId, currentUser.Id, targetUserId);
+    }
+
+    private IEnumerable<Models.User> GetSortedUsersForReveal()
+    {
+        if (room == null) return Enumerable.Empty<Models.User>();
+
+        return room.Users.Values.OrderBy(user =>
+        {
+            // Quem não tem voto registrado
+            if (!room.Votes.ContainsKey(user.Id))
+                return int.MaxValue;
+
+            var voteValue = room.Votes[user.Id].Value;
+
+            // Ausentes (☕ ou 🚽) vão para o final
+            if (voteValue == "☕" || voteValue == "🚽")
+                return 9999;
+
+            // Tenta converter o voto para número
+            if (double.TryParse(voteValue, out var numericValue))
+                return numericValue;
+
+            // Votos não numéricos (XS, S, M, etc) vão no meio
+            return 999;
+        })
+        .ThenBy(user => user.Name); // Desempate alfabético
+    }
+
+    private async Task CopyRoomLink()
+    {
+        // Copia apenas o link da sala, sem userId
+        var baseUri = Navigation.BaseUri.TrimEnd('/');
+        var roomLink = $"{baseUri}/room/{RoomId}";
+
+        var success = await JSRuntime.InvokeAsync<bool>("copyToClipboard", roomLink);
+
+        if (success)
+        {
+            await JSRuntime.InvokeVoidAsync("showToast", "✅ Link copiado! Compartilhe com seu time.", "success");
+        }
+        else
+        {
+            await JSRuntime.InvokeVoidAsync("showToast", "❌ Erro ao copiar link", "error");
+        }
+    }
+
+    public void Dispose()
+    {
+        PokerService.RoomUpdated -= OnRoomUpdated;
+    }
+
+    public class JoinRoomModel
+    {
+        [Required(ErrorMessage = "Por favor, informe seu nome")]
+        public string Name { get; set; } = string.Empty;
+    }
+}

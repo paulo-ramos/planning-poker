@@ -1,0 +1,37 @@
+# EditorConfig - Configurações de formatação de código
+# https://editorconfig.org
+
+root = true
+
+# Configurações padrão para todos os arquivos
+[*]
+charset = utf-8
+indent_style = space
+indent_size = 4
+insert_final_newline = true
+trim_trailing_whitespace = true
+end_of_line = lf
+
+# Arquivos C#
+[*.cs]
+indent_size = 4
+
+# Arquivos Razor
+[*.razor]
+indent_size = 4
+
+# Arquivos de configuração
+[*.{json,yml,yaml}]
+indent_size = 2
+
+# Arquivos de projeto
+[*.{csproj,props,targets}]
+indent_size = 2
+
+# Markdown
+[*.md]
+trim_trailing_whitespace = false
+
+# Shell scripts
+[*.sh]
+end_of_line = lf

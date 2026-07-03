@@ -1,0 +1,54 @@
+{
+  "name": "Planning Poker - .NET 8",
+  "dockerFile": "Dockerfile",
+  "runArgs": [
+    "--name=planning-poker-devcontainer",
+    "--userns=keep-id",
+    "--security-opt=label=disable"
+  ],
+  "workspaceMount": "source=${localWorkspaceFolder},target=/workspace,type=bind,Z",
+  "workspaceFolder": "/workspace",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-dotnettools.csdevkit",
+        "ms-dotnettools.csharp",
+        "ms-dotnettools.vscode-dotnet-runtime",
+        "bradlc.vscode-tailwindcss",
+        "EditorConfig.EditorConfig"
+      ],
+      "settings": {
+        "terminal.integrated.defaultProfile.linux": "bash",
+        "omnisharp.useModernNet": true,
+        "dotnet.server.useOmnisharp": false
+      }
+    }
+  },
+  "forwardPorts": [5000, 5001],
+  "portsAttributes": {
+    "5000": {
+      "label": "Planning Poker HTTP",
+      "onAutoForward": "notify"
+    },
+    "5001": {
+      "label": "Planning Poker HTTPS",
+      "onAutoForward": "notify"
+    }
+  },
+  "postCreateCommand": "dotnet restore && dotnet build",
+  "remoteUser": "vscode",
+  "features": {
+    "ghcr.io/devcontainers/features/common-utils:2": {
+      "installZsh": true,
+      "installOhMyZsh": true,
+      "upgradePackages": true,
+      "username": "vscode",
+      "userUid": "1000",
+      "userGid": "1000"
+    },
+    "ghcr.io/devcontainers/features/git:1": {
+      "version": "latest",
+      "ppa": false
+    }
+  }
+}

@@ -1,0 +1,181 @@
+@page "/"
+@inject PlanningPokerService PokerService
+@inject NavigationManager Navigation
+@inject IJSRuntime JSRuntime
+
+<PageTitle>Planning Poker - Criar Sala</PageTitle>
+
+<div class="max-w-2xl mx-auto">
+    <div class="bg-white/95 backdrop-blur-sm rounded-3xl shadow-2xl p-8 border border-white/20">
+        <div class="text-center mb-8">
+            <div class="text-6xl mb-4">🎴</div>
+            <h1 class="text-4xl font-bold text-gray-800 mb-2">Planning Poker</h1>
+            <p class="text-gray-600">Crie uma sala e comece a planejar com seu time!</p>
+        </div>
+
+        <EditForm Model="@formModel" OnValidSubmit="CreateRoom" class="space-y-6">
+            <DataAnnotationsValidator />
+
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-2">
+                    👤 Seu Nome
+                </label>
+                <InputText @bind-Value="formModel.UserName"
+                           class="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-purple-500 focus:ring-4 focus:ring-purple-500/20 outline-none transition-all"
+                           placeholder="Digite seu nome" />
+                <ValidationMessage For="@(() => formModel.UserName)" class="text-red-500 text-sm mt-1" />
+            </div>
+
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-2">
+                    👥 Nome do Time
+                </label>
+                <InputText @bind-Value="formModel.TeamName"
+                           class="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-purple-500 focus:ring-4 focus:ring-purple-500/20 outline-none transition-all"
+                           placeholder="Ex: Time de Desenvolvimento" />
+                <ValidationMessage For="@(() => formModel.TeamName)" class="text-red-500 text-sm mt-1" />
+            </div>
+
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-2">
+                    🚀 Nome/Número da Sprint
+                </label>
+                <InputText @bind-Value="formModel.SprintName"
+                           class="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-purple-500 focus:ring-4 focus:ring-purple-500/20 outline-none transition-all"
+                           placeholder="Ex: Sprint 42" />
+                <ValidationMessage For="@(() => formModel.SprintName)" class="text-red-500 text-sm mt-1" />
+            </div>
+
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-2">
+                    🎲 Sequência de Votação
+                </label>
+                <select @bind="formModel.SequenceType"
+                        class="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-purple-500 focus:ring-4 focus:ring-purple-500/20 outline-none transition-all bg-white">
+                    <option value="fibonacci-13">Fibonacci até 13 (1, 2, 3, 5, 8, 13)</option>
+                    <option value="fibonacci">Fibonacci (1, 2, 3, 5, 8, 13, 21)</option>
+                    <option value="modified-fibonacci">Fibonacci Modificado (0, 1, 2, 3, 5, 8, 13, 20, 40, 100)</option>
+                    <option value="tshirt">T-Shirt Sizes (XS, S, M, L, XL, XXL)</option>
+                    <option value="simple">Simples (1, 2, 3, 4, 5)</option>
+                </select>
+            </div>
+
+            @if (formModel.SequenceType == "custom")
+            {
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">
+                        ✏️ Sequência Customizada (separada por vírgula)
+                    </label>
+                    <InputText @bind-Value="formModel.CustomSequence"
+                               class="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-purple-500 focus:ring-4 focus:ring-purple-500/20 outline-none transition-all"
+                               placeholder="Ex: 1, 2, 3, 5, 8, ?, ☕" />
+                </div>
+            }
+
+            <button type="submit"
+                    class="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-bold py-4 px-6 rounded-xl shadow-lg hover:shadow-xl transform hover:scale-[1.02] active:scale-[0.98] transition-all duration-200">
+                🎯 Criar Sala de Planning Poker
+            </button>
+        </EditForm>
+
+        @if (!string.IsNullOrEmpty(errorMessage))
+        {
+            <div class="mt-4 p-4 bg-red-100 border-2 border-red-300 rounded-xl text-red-700">
+                ⚠️ @errorMessage
+            </div>
+        }
+    </div>
+
+    <div class="mt-8 text-center">
+        <div class="bg-white/80 backdrop-blur-sm rounded-2xl p-6 border border-white/20">
+            <h2 class="text-xl font-bold text-gray-800 mb-4">📝 Como funciona?</h2>
+            <ul class="text-left space-y-2 text-gray-700">
+                <li class="flex items-start gap-2">
+                    <span class="text-purple-600 font-bold">1.</span>
+                    <span>Crie uma sala preenchendo o formulário acima</span>
+                </li>
+                <li class="flex items-start gap-2">
+                    <span class="text-purple-600 font-bold">2.</span>
+                    <span>Compartilhe o link da sala com seu time</span>
+                </li>
+                <li class="flex items-start gap-2">
+                    <span class="text-purple-600 font-bold">3.</span>
+                    <span>Todos votam simultaneamente nas histórias</span>
+                </li>
+                <li class="flex items-start gap-2">
+                    <span class="text-purple-600 font-bold">4.</span>
+                    <span>Revele os votos e veja a média calculada automaticamente</span>
+                </li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+@code {
+    private CreateRoomModel formModel = new();
+    private string errorMessage = string.Empty;
+
+    private async Task CreateRoom()
+    {
+        try
+        {
+            errorMessage = string.Empty;
+
+            var sequence = GetVotingSequence();
+            var room = PokerService.CreateRoom(
+                formModel.TeamName,
+                formModel.SprintName,
+                sequence,
+                formModel.UserName
+            );
+
+            var moderator = room.GetModerator();
+            if (moderator != null)
+            {
+                // Salva o userId do moderador no sessionStorage
+                await JSRuntime.InvokeVoidAsync("saveUserId", room.Id, moderator.Id);
+
+                // Navega sem userId na URL
+                Navigation.NavigateTo($"/room/{room.Id}");
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Erro ao criar sala: {ex.Message}";
+        }
+    }
+
+    private List<string> GetVotingSequence()
+    {
+        return formModel.SequenceType switch
+        {
+            "fibonacci-13" => new List<string> { "1", "2", "3", "5", "8", "13" },
+            "fibonacci" => new List<string> { "1", "2", "3", "5", "8", "13", "21" },
+            "modified-fibonacci" => new List<string> { "0", "1", "2", "3", "5", "8", "13", "20", "40", "100" },
+            "tshirt" => new List<string> { "XS", "S", "M", "L", "XL", "XXL" },
+            "simple" => new List<string> { "1", "2", "3", "4", "5" },
+            "custom" => formModel.CustomSequence
+                .Split(',')
+                .Select(s => s.Trim())
+                .Where(s => !string.IsNullOrEmpty(s))
+                .ToList(),
+            _ => new List<string> { "1", "2", "3", "5", "8", "13" }
+        };
+    }
+
+    public class CreateRoomModel
+    {
+        [Required(ErrorMessage = "Por favor, informe seu nome")]
+        public string UserName { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Por favor, informe o nome do time")]
+        public string TeamName { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Por favor, informe o nome/número da sprint")]
+        public string SprintName { get; set; } = string.Empty;
+
+        public string SequenceType { get; set; } = "fibonacci-13";
+
+        public string CustomSequence { get; set; } = string.Empty;
+    }
+}

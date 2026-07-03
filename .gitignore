@@ -1,0 +1,52 @@
+## Ignora arquivos de build e sistema
+bin/
+obj/
+out/
+*.user
+*.suo
+*.cache
+*.log
+
+## Ignora arquivos do Visual Studio Code
+.vscode/
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+## Ignora arquivos do VS
+.vs/
+
+## Ignora dependências do Node (se houver)
+node_modules/
+package-lock.json
+yarn.lock
+
+## Ignora arquivos temporários
+*.tmp
+*.temp
+*.swp
+*~
+
+## Ignora arquivos de sistema
+.DS_Store
+Thumbs.db
+
+## Ignora arquivos de publicação
+publish/
+*.pubxml
+*.publishsettings
+
+## Ignora arquivos de user secrets
+appsettings.*.json
+!appsettings.json
+!appsettings.Development.json
+
+## Ignora arquivos de teste
+TestResults/
+*.trx
+
+## Ignora arquivos de cobertura
+coverage/
+*.coverage
+*.coveragexml
