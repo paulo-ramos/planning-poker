@@ -2,9 +2,14 @@
 
 Uma aplicação web moderna e reativa de Planning Poker desenvolvida com **Blazor Server (.NET 8)** para facilitar o planejamento de sprints em equipe.
 
+## 🌐 Aplicação Publicada
+
+**🚀 Acesse agora:** [https://planning-poker-tag.up.railway.app](https://planning-poker-tag.up.railway.app)
+
 ![Blazor](https://img.shields.io/badge/Blazor-512BD4?style=for-the-badge&logo=blazor&logoColor=white)
 ![.NET 8](https://img.shields.io/badge/.NET-8.0-512BD4?style=for-the-badge&logo=dotnet&logoColor=white)
 ![C#](https://img.shields.io/badge/C%23-239120?style=for-the-badge&logo=c-sharp&logoColor=white)
+![Railway](https://img.shields.io/badge/Railway-0B0D0E?style=for-the-badge&logo=railway&logoColor=white)
 
 ## ✨ Características
 
