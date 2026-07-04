@@ -68,6 +68,11 @@ public class Room
     public CannonShot? LastCannonShot { get; set; }
 
     /// <summary>
+    /// Lista thread-safe de notificações da sala (entrada/saída de usuários, etc)
+    /// </summary>
+    public ConcurrentQueue<RoomNotification> Notifications { get; set; } = new();
+
+    /// <summary>
     /// Obtém o usuário moderador da sala
     /// </summary>
     public User? GetModerator()

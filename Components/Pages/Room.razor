@@ -2,6 +2,7 @@
 @inject PlanningPokerService PokerService
 @inject NavigationManager Navigation
 @inject IJSRuntime JSRuntime
+@inject UserCircuitHandler CircuitHandler
 @implements IDisposable
 
 <PageTitle>Planning Poker - @room?.TeamName</PageTitle>
@@ -81,6 +82,26 @@ else if (currentUser == null)
 else if (currentUser != null)
 {
     <div class="max-w-7xl mx-auto space-y-6">
+        <!-- Notificações -->
+        @if (room.Notifications.Any())
+        {
+            <div class="fixed top-20 right-4 z-50 space-y-2 max-w-md">
+                @foreach (var notification in room.Notifications.TakeLast(3))
+                {
+                    var bgColor = notification.Type == NotificationType.Warning 
+                        ? "bg-red-500 border-red-700" 
+                        : "bg-green-500 border-green-700";
+                    
+                    <div class="@bgColor text-white px-4 py-3 rounded-xl shadow-lg border-2 animate-slide-in-right">
+                        <div class="flex items-center gap-2">
+                            <span class="text-lg">@(notification.Type == NotificationType.Warning ? "⚠️" : "ℹ️")</span>
+                            <span class="font-semibold">@notification.Message</span>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+
         <!-- Header da Sala -->
         <div class="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl p-6 border border-white/20">
             <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -285,7 +306,7 @@ else if (currentUser != null)
                 <div class="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl p-6 border border-white/20 sticky top-4">
                     <h2 class="text-xl font-bold text-gray-800 mb-4">👥 Participantes</h2>
                     <div class="space-y-3">
-                        @foreach (var user in room.Users.Values.OrderByDescending(u => u.IsModerator))
+                        @foreach (var user in GetSortedParticipants())
                         {
                             var hasVoted = room.Votes.ContainsKey(user.Id);
                             var statusColor = room.VotesRevealed ? "bg-gray-200" : (hasVoted ? "bg-green-500" : "bg-yellow-400");
@@ -338,6 +359,7 @@ else if (currentUser != null)
     private Models.User? currentUser;
     private JoinRoomModel joinModel = new();
     private string? lastCannonShotId;
+    private readonly string connectionId = Guid.NewGuid().ToString();
 
     protected override void OnInitialized()
     {
@@ -347,7 +369,11 @@ else if (currentUser != null)
         // Se vier userId na URL, tenta recuperar o usuário
         if (room != null && !string.IsNullOrEmpty(UserId))
         {
-            room.Users.TryGetValue(UserId, out currentUser);
+            if (room.Users.TryGetValue(UserId, out currentUser))
+            {
+                // Registra a conexão do usuário existente
+                PokerService.RegisterUserConnection(connectionId, RoomId, currentUser.Id);
+            }
         }
 
         PokerService.RoomUpdated += OnRoomUpdated;
@@ -362,6 +388,8 @@ else if (currentUser != null)
 
             if (!string.IsNullOrEmpty(storedUserId) && room.Users.TryGetValue(storedUserId, out currentUser))
             {
+                // Registra a conexão do usuário recuperado
+                PokerService.RegisterUserConnection(connectionId, RoomId, currentUser.Id);
                 await InvokeAsync(StateHasChanged);
             }
 
@@ -406,6 +434,9 @@ else if (currentUser != null)
 
         if (currentUser != null)
         {
+            // Registra a conexão do novo usuário
+            PokerService.RegisterUserConnection(connectionId, RoomId, currentUser.Id);
+            
             // Salva userId no sessionStorage
             await JSRuntime.InvokeVoidAsync("saveUserId", RoomId, currentUser.Id);
 
@@ -541,6 +572,28 @@ else if (currentUser != null)
         };
     }
 
+    private IEnumerable<Models.User> GetSortedParticipants()
+    {
+        if (room == null) return Enumerable.Empty<Models.User>();
+
+        return room.Users.Values
+            .OrderBy(user =>
+            {
+                // Moderador sempre primeiro
+                if (user.IsModerator) return 0;
+
+                // Depois por papel: QA, Dev, Observer
+                return user.Role switch
+                {
+                    UserRole.QA => 1,
+                    UserRole.Dev => 2,
+                    UserRole.Observer => 3,
+                    _ => 4
+                };
+            })
+            .ThenBy(user => user.Name); // Ordem alfabética dentro de cada grupo
+    }
+
     private async Task CopyRoomLink()
     {
         // Copia apenas o link da sala, sem userId
@@ -561,7 +614,11 @@ else if (currentUser != null)
 
     public void Dispose()
     {
+        // Remove o event handler
         PokerService.RoomUpdated -= OnRoomUpdated;
+        
+        // Desregistra a conexão
+        PokerService.UnregisterUserConnection(connectionId);
     }
 
     public class JoinRoomModel

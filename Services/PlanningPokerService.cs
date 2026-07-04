@@ -9,6 +9,7 @@ namespace PlanningPoker.Services;
 public class PlanningPokerService
 {
     private readonly ConcurrentDictionary<string, Room> _rooms = new();
+    private readonly ConcurrentDictionary<string, (string RoomId, string UserId)> _circuitConnections = new();
     private readonly ILogger<PlanningPokerService> _logger;
     private readonly Timer _cleanupTimer;
 
@@ -326,6 +327,104 @@ public class PlanningPokerService
         var totalRooms = _rooms.Count;
         var totalUsers = _rooms.Values.Sum(r => r.Users.Count);
         return (totalRooms, totalUsers);
+    }
+
+    /// <summary>
+    /// Registra a conexão de um usuário (chamado quando entra na sala)
+    /// </summary>
+    public void RegisterUserConnection(string circuitId, string roomId, string userId)
+    {
+        _circuitConnections.TryAdd(circuitId, (roomId, userId));
+        _logger.LogInformation("Conexão registrada: Circuit {CircuitId} -> Room {RoomId}, User {UserId}", 
+            circuitId, roomId, userId);
+    }
+
+    /// <summary>
+    /// Remove o registro de conexão de um usuário
+    /// </summary>
+    public void UnregisterUserConnection(string circuitId)
+    {
+        _circuitConnections.TryRemove(circuitId, out _);
+    }
+
+    /// <summary>
+    /// Trata a desconexão de um usuário (chamado pelo CircuitHandler)
+    /// </summary>
+    public void HandleUserDisconnection(string circuitId)
+    {
+        if (!_circuitConnections.TryRemove(circuitId, out var connection))
+        {
+            _logger.LogWarning("Desconexão sem registro de conexão: {CircuitId}", circuitId);
+            return;
+        }
+
+        var (roomId, userId) = connection;
+        var room = GetRoom(roomId);
+        
+        if (room == null)
+        {
+            _logger.LogWarning("Sala não encontrada para desconexão: {RoomId}", roomId);
+            return;
+        }
+
+        if (!room.Users.TryRemove(userId, out var user))
+        {
+            _logger.LogWarning("Usuário não encontrado na sala: {UserId} em {RoomId}", userId, roomId);
+            return;
+        }
+
+        _logger.LogInformation("Usuário desconectado: {UserName} ({UserId}) da sala {RoomId}", 
+            user.Name, userId, roomId);
+
+        // Cria notificação de saída
+        var roleIcon = user.Role switch
+        {
+            UserRole.Dev => "👨‍💻",
+            UserRole.QA => "🧪",
+            UserRole.Observer => "👀",
+            _ => "👤"
+        };
+
+        var notification = new RoomNotification
+        {
+            Message = $"{roleIcon} {user.Name} saiu da sala",
+            Type = NotificationType.Info
+        };
+
+        room.Notifications.Enqueue(notification);
+
+        // Verifica se era o moderador
+        if (user.IsModerator)
+        {
+            var warningNotification = new RoomNotification
+            {
+                Message = "⚠️ Sala sem moderador no momento!",
+                Type = NotificationType.Warning
+            };
+            room.Notifications.Enqueue(warningNotification);
+        }
+
+        // Atualiza atividade e notifica
+        room.UpdateActivity();
+        NotifyRoomUpdate(roomId);
+    }
+
+    /// <summary>
+    /// Adiciona uma notificação customizada na sala
+    /// </summary>
+    public void AddNotification(string roomId, string message, NotificationType type = NotificationType.Info)
+    {
+        var room = GetRoom(roomId);
+        if (room == null) return;
+
+        var notification = new RoomNotification
+        {
+            Message = message,
+            Type = type
+        };
+
+        room.Notifications.Enqueue(notification);
+        NotifyRoomUpdate(roomId);
     }
 
     #endregion

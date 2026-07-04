@@ -10,6 +10,11 @@ builder.Services.AddRazorComponents()
 // Registrar o serviço de Planning Poker como Singleton (estado compartilhado em memória)
 builder.Services.AddSingleton<PlanningPokerService>();
 
+// Registrar o CircuitHandler para detectar desconexões
+builder.Services.AddScoped<UserCircuitHandler>();
+builder.Services.AddScoped<Microsoft.AspNetCore.Components.Server.Circuits.CircuitHandler, UserCircuitHandler>(
+    provider => provider.GetRequiredService<UserCircuitHandler>());
+
 // Configurar logging
 builder.Logging.ClearProviders();
 builder.Logging.AddConsole();
