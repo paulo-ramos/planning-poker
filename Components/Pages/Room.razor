@@ -88,10 +88,10 @@ else if (currentUser != null)
             <div class="fixed top-20 right-4 z-50 space-y-2 max-w-md">
                 @foreach (var notification in room.Notifications.TakeLast(3))
                 {
-                    var bgColor = notification.Type == NotificationType.Warning 
-                        ? "bg-red-500 border-red-700" 
+                    var bgColor = notification.Type == NotificationType.Warning
+                        ? "bg-red-500 border-red-700"
                         : "bg-green-500 border-green-700";
-                    
+
                     <div class="@bgColor text-white px-4 py-3 rounded-xl shadow-lg border-2 animate-slide-in-right">
                         <div class="flex items-center gap-2">
                             <span class="text-lg">@(notification.Type == NotificationType.Warning ? "⚠️" : "ℹ️")</span>
@@ -172,7 +172,6 @@ else if (currentUser != null)
 
                                     <div class="@cardStyle rounded-xl p-4 border-2">
                                         <div class="flex items-center gap-2 mb-2">
-                                            <span class="text-lg">@GetRoleIcon(user.Role)</span>
                                             <img src="@user.AvatarUrl" alt="@user.Name" class="w-8 h-8 rounded-full" />
                                             <span class="font-semibold text-sm text-gray-800 truncate">@user.Name</span>
                                         </div>
@@ -436,7 +435,7 @@ else if (currentUser != null)
         {
             // Registra a conexão do novo usuário
             PokerService.RegisterUserConnection(connectionId, RoomId, currentUser.Id);
-            
+
             // Salva userId no sessionStorage
             await JSRuntime.InvokeVoidAsync("saveUserId", RoomId, currentUser.Id);
 
@@ -479,7 +478,7 @@ else if (currentUser != null)
         if (room == null) return Enumerable.Empty<Models.User>();
 
         return room.Users.Values
-            .OrderBy(user => 
+            .OrderBy(user =>
             {
                 // Ordena por Role: QA primeiro (0), depois Dev (1), depois Observer (2)
                 return user.Role switch
@@ -616,7 +615,7 @@ else if (currentUser != null)
     {
         // Remove o event handler
         PokerService.RoomUpdated -= OnRoomUpdated;
-        
+
         // Desregistra a conexão
         PokerService.UnregisterUserConnection(connectionId);
     }

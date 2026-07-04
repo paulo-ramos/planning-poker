@@ -335,7 +335,7 @@ public class PlanningPokerService
     public void RegisterUserConnection(string circuitId, string roomId, string userId)
     {
         _circuitConnections.TryAdd(circuitId, (roomId, userId));
-        _logger.LogInformation("Conexão registrada: Circuit {CircuitId} -> Room {RoomId}, User {UserId}", 
+        _logger.LogInformation("Conexão registrada: Circuit {CircuitId} -> Room {RoomId}, User {UserId}",
             circuitId, roomId, userId);
     }
 
@@ -360,7 +360,7 @@ public class PlanningPokerService
 
         var (roomId, userId) = connection;
         var room = GetRoom(roomId);
-        
+
         if (room == null)
         {
             _logger.LogWarning("Sala não encontrada para desconexão: {RoomId}", roomId);
@@ -373,7 +373,7 @@ public class PlanningPokerService
             return;
         }
 
-        _logger.LogInformation("Usuário desconectado: {UserName} ({UserId}) da sala {RoomId}", 
+        _logger.LogInformation("Usuário desconectado: {UserName} ({UserId}) da sala {RoomId}",
             user.Name, userId, roomId);
 
         // Cria notificação de saída

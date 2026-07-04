@@ -110,7 +110,7 @@ public class Room
     public double? GetVotesAverageByRole(UserRole role)
     {
         var usersInRole = Users.Values.Where(u => u.Role == role).Select(u => u.Id).ToHashSet();
-        
+
         var numericVotes = Votes.Values
             .Where(v => usersInRole.Contains(v.UserId))
             .Select(v => double.TryParse(v.Value, out var num) ? (double?)num : null)

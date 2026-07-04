@@ -31,10 +31,10 @@ public class UserCircuitHandler : CircuitHandler
     public override async Task OnConnectionDownAsync(Circuit circuit, CancellationToken cancellationToken)
     {
         _logger.LogInformation("Connection down for circuit: {CircuitId}", circuit.Id);
-        
+
         // Aguarda um pouco antes de remover (em caso de reconexão temporária)
         await Task.Delay(TimeSpan.FromSeconds(10), cancellationToken);
-        
+
         return;
     }
 
@@ -44,10 +44,10 @@ public class UserCircuitHandler : CircuitHandler
     public override Task OnCircuitClosedAsync(Circuit circuit, CancellationToken cancellationToken)
     {
         _logger.LogInformation("Circuit closed: {CircuitId}", circuit.Id);
-        
+
         // Remove o usuário da sala
         _pokerService.HandleUserDisconnection(circuit.Id);
-        
+
         return Task.CompletedTask;
     }
 }
