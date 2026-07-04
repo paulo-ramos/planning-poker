@@ -9,6 +9,9 @@ public class UserCircuitHandler : CircuitHandler
 {
     private readonly PlanningPokerService _pokerService;
     private readonly ILogger<UserCircuitHandler> _logger;
+    private string? _currentCircuitId;
+
+    public string? CurrentCircuitId => _currentCircuitId;
 
     public UserCircuitHandler(PlanningPokerService pokerService, ILogger<UserCircuitHandler> logger)
     {
@@ -21,6 +24,7 @@ public class UserCircuitHandler : CircuitHandler
     /// </summary>
     public override Task OnCircuitOpenedAsync(Circuit circuit, CancellationToken cancellationToken)
     {
+        _currentCircuitId = circuit.Id;
         _logger.LogInformation("Circuit opened: {CircuitId}", circuit.Id);
         return Task.CompletedTask;
     }

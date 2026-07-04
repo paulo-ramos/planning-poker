@@ -358,7 +358,6 @@ else if (currentUser != null)
     private Models.User? currentUser;
     private JoinRoomModel joinModel = new();
     private string? lastCannonShotId;
-    private readonly string connectionId = Guid.NewGuid().ToString();
 
     protected override void OnInitialized()
     {
@@ -371,7 +370,10 @@ else if (currentUser != null)
             if (room.Users.TryGetValue(UserId, out currentUser))
             {
                 // Registra a conexão do usuário existente
-                PokerService.RegisterUserConnection(connectionId, RoomId, currentUser.Id);
+                if (CircuitHandler.CurrentCircuitId != null)
+                {
+                    PokerService.RegisterUserConnection(CircuitHandler.CurrentCircuitId, RoomId, currentUser.Id);
+                }
             }
         }
 
@@ -388,7 +390,10 @@ else if (currentUser != null)
             if (!string.IsNullOrEmpty(storedUserId) && room.Users.TryGetValue(storedUserId, out currentUser))
             {
                 // Registra a conexão do usuário recuperado
-                PokerService.RegisterUserConnection(connectionId, RoomId, currentUser.Id);
+                if (CircuitHandler.CurrentCircuitId != null)
+                {
+                    PokerService.RegisterUserConnection(CircuitHandler.CurrentCircuitId, RoomId, currentUser.Id);
+                }
                 await InvokeAsync(StateHasChanged);
             }
 
@@ -434,10 +439,10 @@ else if (currentUser != null)
         if (currentUser != null)
         {
             // Registra a conexão do novo usuário
-            PokerService.RegisterUserConnection(connectionId, RoomId, currentUser.Id);
-
-            // Salva userId no sessionStorage
-            await JSRuntime.InvokeVoidAsync("saveUserId", RoomId, currentUser.Id);
+            if (CircuitHandler.CurrentCircuitId != null)
+            {
+                PokerService.RegisterUserConnection(CircuitHandler.CurrentCircuitId, RoomId, currentUser.Id);
+            }
 
             // Atualiza a UI para mostrar a sala
             StateHasChanged();
@@ -617,7 +622,10 @@ else if (currentUser != null)
         PokerService.RoomUpdated -= OnRoomUpdated;
 
         // Desregistra a conexão
-        PokerService.UnregisterUserConnection(connectionId);
+        if (CircuitHandler.CurrentCircuitId != null)
+        {
+            PokerService.UnregisterUserConnection(CircuitHandler.CurrentCircuitId);
+        }
     }
 
     public class JoinRoomModel
