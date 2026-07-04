@@ -99,6 +99,72 @@ public class Room
     }
 
     /// <summary>
+    /// Calcula a média dos votos numéricos por grupo (Dev, QA)
+    /// Observadores não são incluídos no cálculo
+    /// </summary>
+    public double? GetVotesAverageByRole(UserRole role)
+    {
+        var usersInRole = Users.Values.Where(u => u.Role == role).Select(u => u.Id).ToHashSet();
+        
+        var numericVotes = Votes.Values
+            .Where(v => usersInRole.Contains(v.UserId))
+            .Select(v => double.TryParse(v.Value, out var num) ? (double?)num : null)
+            .Where(v => v.HasValue)
+            .Select(v => v!.Value)
+            .ToList();
+
+        return numericVotes.Any() ? numericVotes.Average() : null;
+    }
+
+    /// <summary>
+    /// Calcula a soma das médias de Dev + QA
+    /// </summary>
+    public double? GetCombinedAverage()
+    {
+        var devAvg = GetVotesAverageByRole(UserRole.Dev);
+        var qaAvg = GetVotesAverageByRole(UserRole.QA);
+
+        if (!devAvg.HasValue && !qaAvg.HasValue) return null;
+
+        return (devAvg ?? 0) + (qaAvg ?? 0);
+    }
+
+    /// <summary>
+    /// Arredonda um valor para o próximo número da sequência Fibonacci
+    /// </summary>
+    public string RoundToFibonacci(double value)
+    {
+        // Sequência Fibonacci estendida
+        var fibonacci = new[] { 0, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144 };
+
+        // Se o valor for menor que o menor Fibonacci, retorna o menor
+        if (value <= fibonacci[0]) return fibonacci[0].ToString();
+
+        // Procura o próximo valor na sequência
+        for (int i = 0; i < fibonacci.Length; i++)
+        {
+            if (value <= fibonacci[i])
+            {
+                return fibonacci[i].ToString();
+            }
+        }
+
+        // Se for maior que todos, retorna o maior
+        return fibonacci[^1].ToString();
+    }
+
+    /// <summary>
+    /// Obtém a estimativa final arredondada (soma Dev + QA arredondada para Fibonacci)
+    /// </summary>
+    public string? GetFinalEstimate()
+    {
+        var combined = GetCombinedAverage();
+        if (!combined.HasValue) return null;
+
+        return RoundToFibonacci(combined.Value);
+    }
+
+    /// <summary>
     /// Atualiza o timestamp de última atividade
     /// </summary>
     public void UpdateActivity()

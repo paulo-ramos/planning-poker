@@ -28,7 +28,7 @@ public class PlanningPokerService
     /// <summary>
     /// Cria uma nova sala de Planning Poker
     /// </summary>
-    public Room CreateRoom(string teamName, string sprintName, List<string> votingSequence, string moderatorName, string instructions = "")
+    public Room CreateRoom(string teamName, string sprintName, List<string> votingSequence, string moderatorName, string instructions = "", UserRole moderatorRole = UserRole.Dev)
     {
         var room = new Room
         {
@@ -42,6 +42,7 @@ public class PlanningPokerService
         {
             Name = moderatorName,
             IsModerator = true,
+            Role = moderatorRole,
             AvatarUrl = GenerateAvatarUrl(moderatorName)
         };
 
@@ -94,7 +95,7 @@ public class PlanningPokerService
     /// <summary>
     /// Adiciona um usuário a uma sala
     /// </summary>
-    public User? JoinRoom(string roomId, string userName)
+    public User? JoinRoom(string roomId, string userName, UserRole role = UserRole.Dev)
     {
         var room = GetRoom(roomId);
         if (room == null) return null;
@@ -103,6 +104,7 @@ public class PlanningPokerService
         {
             Name = userName,
             IsModerator = false,
+            Role = role,
             AvatarUrl = GenerateAvatarUrl(userName)
         };
 

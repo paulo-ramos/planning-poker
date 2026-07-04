@@ -18,8 +18,10 @@ Uma aplicação web moderna e reativa de Planning Poker desenvolvida com **Blazo
 - 🎨 **Design Moderno**: Interface limpa e responsiva com Tailwind CSS
 - 🔒 **Thread-Safe**: Serviço Singleton com suporte completo a concorrência
 - 🎯 **Sequências Customizáveis**: Fibonacci, Modified Fibonacci, T-Shirt Sizes ou crie sua própria
-- � **Instruções de Referência**: Campo customizável para exibir guias de estimativa em destaque
-- �📊 **Cálculo Automático**: Média aritmética dos votos numéricos
+- 👥 **Grupos de Votação**: Separe participantes em Dev, QA e Observador com médias independentes
+- 🎲 **Estimativa Inteligente**: Soma automática de Dev + QA com arredondamento Fibonacci
+- 📋 **Instruções de Referência**: Campo customizável para exibir guias de estimativa em destaque
+- 📊 **Cálculo Automático**: Média aritmética dos votos numéricos por grupo
 - 🎭 **Avatares Dinâmicos**: Geração automática de avatares via DiceBear API
 - 📈 **Google Analytics**: Integração com Google Analytics 4 para métricas de uso
 - ⏰ **Limpeza Automática**: Salas inativas são removidas automaticamente após 2 horas
@@ -139,6 +141,7 @@ O projeto está otimizado para **Fedora** com **Podman** e **SELinux**:
 1. Acesse a página inicial
 2. Preencha os campos:
    - **Seu Nome**: Como você será identificado
+   - **Seu Papel**: Escolha entre Desenvolvedor (Dev), QA/Tester ou Observador
    - **Nome do Time**: Identificação da equipe
    - **Sprint**: Nome ou número da sprint
    - **Instruções de Referência**: Guia de estimativa (vem com um padrão sugerido que pode ser editado)
@@ -147,6 +150,8 @@ O projeto está otimizado para **Fedora** com **Podman** e **SELinux**:
 4. Você será redirecionado para a sala como Moderador
 
 > 💡 **Dica**: As instruções de referência aparecem em destaque com fundo amarelo durante a votação, ajudando o time a ter consistência nas estimativas.
+
+> 🎯 **Grupos**: Desenvolvedores e QA têm médias calculadas separadamente. Observadores podem votar mas não contam na média final.
 
 ### 2️⃣ Convidar Participantes
 
@@ -164,7 +169,11 @@ O projeto está otimizado para **Fedora** com **Podman** e **SELinux**:
 
 1. O moderador clica em "👁️ Revelar Votos"
 2. Todos os votos são exibidos simultaneamente
-3. A média aritmética é calculada automaticamente (votos numéricos)
+3. As médias são calculadas automaticamente:
+   - **Média Dev**: Média dos votos dos desenvolvedores
+   - **Média QA**: Média dos votos dos QAs/Testers
+   - **Estimativa Final**: Soma das médias (Dev + QA) arredondada para o próximo Fibonacci
+   - Observadores não são contabilizados nas médias
 
 ### 5️⃣ Nova Rodada
 

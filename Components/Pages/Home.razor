@@ -28,6 +28,37 @@
 
             <div>
                 <label class="block text-sm font-semibold text-gray-700 mb-2">
+                    🎭 Seu Papel na Votação
+                </label>
+                <InputRadioGroup @bind-Value="formModel.UserRole">
+                    <div class="space-y-2">
+                        <label class="flex items-center gap-3 p-3 rounded-xl border-2 border-gray-200 hover:border-purple-300 cursor-pointer transition-all">
+                            <InputRadio Value="@UserRole.Dev" class="w-4 h-4 text-purple-600" />
+                            <div>
+                                <div class="font-semibold text-gray-800">👨‍💻 Desenvolvedor (Dev)</div>
+                                <div class="text-xs text-gray-500">Seu voto conta na média final</div>
+                            </div>
+                        </label>
+                        <label class="flex items-center gap-3 p-3 rounded-xl border-2 border-gray-200 hover:border-purple-300 cursor-pointer transition-all">
+                            <InputRadio Value="@UserRole.QA" class="w-4 h-4 text-purple-600" />
+                            <div>
+                                <div class="font-semibold text-gray-800">🧪 QA/Tester (QA)</div>
+                                <div class="text-xs text-gray-500">Seu voto conta na média final</div>
+                            </div>
+                        </label>
+                        <label class="flex items-center gap-3 p-3 rounded-xl border-2 border-gray-200 hover:border-purple-300 cursor-pointer transition-all">
+                            <InputRadio Value="@UserRole.Observer" class="w-4 h-4 text-purple-600" />
+                            <div>
+                                <div class="font-semibold text-gray-800">👀 Observador</div>
+                                <div class="text-xs text-gray-500">Seu voto não conta na média (apenas acompanha)</div>
+                            </div>
+                        </label>
+                    </div>
+                </InputRadioGroup>
+            </div>
+
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-2">
                     👥 Nome do Time
                 </label>
                 <InputText @bind-Value="formModel.TeamName"
@@ -138,7 +169,8 @@
                 formModel.SprintName,
                 sequence,
                 formModel.UserName,
-                formModel.Instructions
+                formModel.Instructions,
+                formModel.UserRole
             );
 
             var moderator = room.GetModerator();
@@ -192,6 +224,8 @@
 5 ----- 3 a 4 dias
 8 ----- 5 a 8 dias
 13 ---- Considere dividir em tarefas menores";
+
+        public UserRole UserRole { get; set; } = UserRole.Dev;
 
         public string SequenceType { get; set; } = "fibonacci-13";
 
