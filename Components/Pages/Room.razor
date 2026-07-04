@@ -141,24 +141,32 @@ else if (currentUser != null)
                                     var hasVoted = room.Votes.ContainsKey(user.Id);
                                     var voteValue = hasVoted ? room.Votes[user.Id].Value : "";
                                     var isAbsentee = voteValue == "☕" || voteValue == "🚽";
-                                    var cardStyle = isAbsentee
-                                        ? "bg-gradient-to-br from-orange-50 to-yellow-50 border-orange-300"
-                                        : "bg-gradient-to-br from-purple-50 to-indigo-50 border-purple-200";
+                                    var isObserver = user.Role == UserRole.Observer;
+                                    var cardStyle = isObserver
+                                        ? "bg-gradient-to-br from-red-50 to-red-100 border-red-300"
+                                        : isAbsentee
+                                            ? "bg-gradient-to-br from-orange-50 to-yellow-50 border-orange-300"
+                                            : "bg-gradient-to-br from-purple-50 to-indigo-50 border-purple-200";
 
                                     <div class="@cardStyle rounded-xl p-4 border-2">
                                         <div class="flex items-center gap-2 mb-2">
+                                            <span class="text-lg">@GetRoleIcon(user.Role)</span>
                                             <img src="@user.AvatarUrl" alt="@user.Name" class="w-8 h-8 rounded-full" />
                                             <span class="font-semibold text-sm text-gray-800 truncate">@user.Name</span>
                                         </div>
                                         <div class="text-center">
                                             @if (hasVoted)
                                             {
-                                                <div class="text-3xl font-bold @(isAbsentee ? "text-orange-600" : "text-purple-600")">
+                                                <div class="text-3xl font-bold @(isObserver ? "text-red-600" : isAbsentee ? "text-orange-600" : "text-purple-600")">
                                                     @voteValue
                                                 </div>
                                                 @if (isAbsentee)
                                                 {
                                                     <div class="text-xs text-orange-600 mt-1">Ausente</div>
+                                                }
+                                                @if (isObserver)
+                                                {
+                                                    <div class="text-xs text-red-600 mt-1">Não conta</div>
                                                 }
                                             }
                                             else
@@ -171,54 +179,65 @@ else if (currentUser != null)
                             </div>
 
                             <!-- Médias por Grupo e Estimativa Final -->
-                            <div class="space-y-4">
-                                @{
-                                    var devAvg = room.GetVotesAverageByRole(UserRole.Dev);
-                                    var qaAvg = room.GetVotesAverageByRole(UserRole.QA);
-                                    var combined = room.GetCombinedAverage();
-                                    var finalEstimate = room.GetFinalEstimate();
-                                }
+                            @{
+                                var devAvg = room.GetVotesAverageByRole(UserRole.Dev);
+                                var qaAvg = room.GetVotesAverageByRole(UserRole.QA);
+                                var combined = room.GetCombinedAverage();
+                                var finalEstimate = room.GetFinalEstimate();
+                                var devVotesDistribution = GetDevVotesDistribution();
+                            }
 
-                                @if (devAvg.HasValue || qaAvg.HasValue)
-                                {
-                                    <div class="grid grid-cols-2 gap-4">
-                                        @if (devAvg.HasValue)
-                                        {
-                                            <div class="bg-gradient-to-br from-blue-100 to-blue-200 rounded-xl p-4 border-2 border-blue-300">
-                                                <div class="text-xs font-semibold text-blue-900 mb-1">👨‍💻 MÉDIA DEV</div>
-                                                <div class="text-3xl font-bold text-blue-900">@devAvg.Value.ToString("F1")</div>
-                                            </div>
-                                        }
-                                        @if (qaAvg.HasValue)
-                                        {
-                                            <div class="bg-gradient-to-br from-green-100 to-green-200 rounded-xl p-4 border-2 border-green-300">
-                                                <div class="text-xs font-semibold text-green-900 mb-1">🧪 MÉDIA QA</div>
-                                                <div class="text-3xl font-bold text-green-900">@qaAvg.Value.ToString("F1")</div>
-                                            </div>
-                                        }
-                                    </div>
-                                }
-
-                                @if (combined.HasValue && finalEstimate != null)
-                                {
-                                    <div class="bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-2xl p-6 text-center">
-                                        <div class="text-sm font-semibold mb-2">🎯 ESTIMATIVA FINAL</div>
-                                        <div class="text-lg opacity-90 mb-1">
-                                            Dev @(devAvg?.ToString("F1") ?? "0") + QA @(qaAvg?.ToString("F1") ?? "0") = @combined.Value.ToString("F1")
+                            @if (devAvg.HasValue || qaAvg.HasValue || combined.HasValue)
+                            {
+                                <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                    @if (qaAvg.HasValue)
+                                    {
+                                        <div class="bg-gradient-to-br from-green-100 to-green-200 rounded-xl p-3 border-2 border-green-300">
+                                            <div class="text-xs font-semibold text-green-900 mb-1">🧪 QA</div>
+                                            <div class="text-3xl font-bold text-green-900">@qaAvg.Value.ToString("F1")</div>
                                         </div>
-                                        <div class="text-6xl font-bold mt-2">@finalEstimate</div>
-                                        <div class="text-xs opacity-80 mt-2">Arredondado para Fibonacci</div>
-                                    </div>
-                                }
-                                else if (room.GetVotesAverage().HasValue)
-                                {
-                                    <!-- Fallback para quando não há divisão por grupos -->
-                                    <div class="bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-2xl p-6 text-center">
-                                        <div class="text-sm font-semibold mb-2">📊 MÉDIA DOS VOTOS</div>
-                                        <div class="text-5xl font-bold">@room.GetVotesAverage()?.ToString("F1")</div>
-                                    </div>
-                                }
-                            </div>
+                                    }
+                                    @if (devAvg.HasValue)
+                                    {
+                                        <div class="bg-gradient-to-br from-blue-100 to-blue-200 rounded-xl p-3 border-2 border-blue-300">
+                                            <div class="text-xs font-semibold text-blue-900 mb-1">👨‍💻 DEV</div>
+                                            <div class="text-3xl font-bold text-blue-900">@devAvg.Value.ToString("F1")</div>
+                                        </div>
+                                    }
+                                    @if (combined.HasValue && finalEstimate != null)
+                                    {
+                                        <div class="bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-xl p-3 border-2 border-purple-700">
+                                            <div class="text-xs font-semibold mb-1">🎯 FINAL</div>
+                                            <div class="text-3xl font-bold">@finalEstimate</div>
+                                            <div class="text-xs opacity-80 mt-0.5">@(devAvg?.ToString("F1") ?? "0") + @(qaAvg?.ToString("F1") ?? "0")</div>
+                                        </div>
+                                    }
+                                    @if (devVotesDistribution.Any())
+                                    {
+                                        <div class="bg-gradient-to-br from-gray-100 to-gray-200 rounded-xl p-3 border-2 border-gray-300">
+                                            <div class="text-xs font-semibold text-gray-900 mb-2">📊 DIST. DEV</div>
+                                            <div class="space-y-1">
+                                                @foreach (var (vote, count) in devVotesDistribution.OrderBy(kv => double.TryParse(kv.Key, out var n) ? n : 999))
+                                                {
+                                                    <div class="flex items-center gap-1 text-xs">
+                                                        <span class="font-bold text-gray-800 w-6">@vote:</span>
+                                                        <div class="flex-1 bg-blue-400 rounded h-3" style="width: @(count * 100.0 / devVotesDistribution.Values.Max())%"></div>
+                                                        <span class="text-gray-700 font-semibold w-4">@count</span>
+                                                    </div>
+                                                }
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+                            }
+                            else if (room.GetVotesAverage().HasValue)
+                            {
+                                <!-- Fallback para quando não há divisão por grupos -->
+                                <div class="bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-2xl p-6 text-center">
+                                    <div class="text-sm font-semibold mb-2">📊 MÉDIA</div>
+                                    <div class="text-5xl font-bold">@room.GetVotesAverage()?.ToString("F1")</div>
+                                </div>
+                            }
                         </div>
                     }
                 </div>
@@ -422,26 +441,54 @@ else if (currentUser != null)
     {
         if (room == null) return Enumerable.Empty<Models.User>();
 
-        return room.Users.Values.OrderBy(user =>
-        {
-            // Quem não tem voto registrado
-            if (!room.Votes.ContainsKey(user.Id))
-                return int.MaxValue;
+        return room.Users.Values
+            .OrderBy(user => 
+            {
+                // Ordena por Role: QA primeiro (0), depois Dev (1), depois Observer (2)
+                return user.Role switch
+                {
+                    UserRole.QA => 0,
+                    UserRole.Dev => 1,
+                    UserRole.Observer => 2,
+                    _ => 3
+                };
+            })
+            .ThenBy(user =>
+            {
+                // Dentro de cada grupo, ordena por voto
+                if (!room.Votes.ContainsKey(user.Id))
+                    return int.MaxValue;
 
-            var voteValue = room.Votes[user.Id].Value;
+                var voteValue = room.Votes[user.Id].Value;
 
-            // Ausentes (☕ ou 🚽) vão para o final
-            if (voteValue == "☕" || voteValue == "🚽")
-                return 9999;
+                // Ausentes (☕ ou 🚽) vão para o final
+                if (voteValue == "☕" || voteValue == "🚽")
+                    return 9999;
 
-            // Tenta converter o voto para número
-            if (double.TryParse(voteValue, out var numericValue))
-                return numericValue;
+                // Tenta converter o voto para número
+                if (double.TryParse(voteValue, out var numericValue))
+                    return numericValue;
 
-            // Votos não numéricos (XS, S, M, etc) vão no meio
-            return 999;
-        })
-        .ThenBy(user => user.Name); // Desempate alfabético
+                // Votos não numéricos (XS, S, M, etc) vão no meio
+                return 999;
+            })
+            .ThenBy(user => user.Name); // Desempate alfabético
+    }
+
+    private Dictionary<string, int> GetDevVotesDistribution()
+    {
+        if (room == null) return new Dictionary<string, int>();
+
+        var devUserIds = room.Users.Values
+            .Where(u => u.Role == UserRole.Dev)
+            .Select(u => u.Id)
+            .ToHashSet();
+
+        return room.Votes.Values
+            .Where(v => devUserIds.Contains(v.UserId))
+            .Where(v => !string.IsNullOrEmpty(v.Value) && v.Value != "☕" && v.Value != "🚽")
+            .GroupBy(v => v.Value)
+            .ToDictionary(g => g.Key, g => g.Count());
     }
 
     private string GetRoleIcon(UserRole role)
