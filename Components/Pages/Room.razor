@@ -141,12 +141,13 @@ else if (currentUser != null)
                                     var hasVoted = room.Votes.ContainsKey(user.Id);
                                     var voteValue = hasVoted ? room.Votes[user.Id].Value : "";
                                     var isAbsentee = voteValue == "☕" || voteValue == "🚽";
-                                    var isObserver = user.Role == UserRole.Observer;
-                                    var cardStyle = isObserver
-                                        ? "bg-gradient-to-br from-red-50 to-red-100 border-red-300"
-                                        : isAbsentee
-                                            ? "bg-gradient-to-br from-orange-50 to-yellow-50 border-orange-300"
-                                            : "bg-gradient-to-br from-purple-50 to-indigo-50 border-purple-200";
+                                    var cardStyle = isAbsentee
+                                        ? "bg-gradient-to-br from-orange-50 to-yellow-50 border-orange-300"
+                                        : user.Role == UserRole.QA
+                                            ? "bg-gradient-to-br from-green-50 to-green-100 border-green-300"
+                                            : user.Role == UserRole.Dev
+                                                ? "bg-gradient-to-br from-blue-50 to-blue-100 border-blue-300"
+                                                : "bg-gradient-to-br from-red-50 to-red-100 border-red-300";
 
                                     <div class="@cardStyle rounded-xl p-4 border-2">
                                         <div class="flex items-center gap-2 mb-2">
@@ -157,14 +158,18 @@ else if (currentUser != null)
                                         <div class="text-center">
                                             @if (hasVoted)
                                             {
-                                                <div class="text-3xl font-bold @(isObserver ? "text-red-600" : isAbsentee ? "text-orange-600" : "text-purple-600")">
+                                                var voteColor = isAbsentee ? "text-orange-600" :
+                                                                user.Role == UserRole.QA ? "text-green-700" :
+                                                                user.Role == UserRole.Dev ? "text-blue-700" :
+                                                                "text-red-700";
+                                                <div class="text-3xl font-bold @voteColor">
                                                     @voteValue
                                                 </div>
                                                 @if (isAbsentee)
                                                 {
                                                     <div class="text-xs text-orange-600 mt-1">Ausente</div>
                                                 }
-                                                @if (isObserver)
+                                                @if (user.Role == UserRole.Observer)
                                                 {
                                                     <div class="text-xs text-red-600 mt-1">Não conta</div>
                                                 }
@@ -287,10 +292,11 @@ else if (currentUser != null)
                             var isCurrentUser = user.Id == currentUser?.Id;
                             var canShoot = !isCurrentUser && !hasVoted && !room.VotesRevealed;
                             var cursorClass = canShoot ? "cursor-pointer hover:scale-105 hover:shadow-lg" : "opacity-50 cursor-not-allowed";
+                            var roleBackgroundClass = GetRoleBackgroundClass(user.Role);
 
                             <div data-user-id="@user.Id"
                                  @onclick="() => FireCannonAt(user.Id, hasVoted)"
-                                 class="@cursorClass flex items-center gap-3 p-3 rounded-xl bg-gradient-to-r from-purple-50 to-indigo-50 border border-purple-200 transition-all">
+                                 class="@cursorClass flex items-center gap-3 p-3 rounded-xl @roleBackgroundClass transition-all">
                                 <img src="@user.AvatarUrl" alt="@user.Name" class="w-10 h-10 rounded-full" />
                                 <div class="flex-1 min-w-0">
                                     <div class="font-semibold text-gray-800 truncate">@user.Name</div>
@@ -521,6 +527,17 @@ else if (currentUser != null)
             UserRole.QA => "text-green-700 bg-green-100 px-2 py-0.5 rounded font-semibold",
             UserRole.Observer => "text-gray-700 bg-gray-100 px-2 py-0.5 rounded font-semibold",
             _ => "text-gray-600"
+        };
+    }
+
+    private string GetRoleBackgroundClass(UserRole role)
+    {
+        return role switch
+        {
+            UserRole.Dev => "bg-gradient-to-r from-blue-50 to-blue-100 border border-blue-300",
+            UserRole.QA => "bg-gradient-to-r from-green-50 to-green-100 border border-green-300",
+            UserRole.Observer => "bg-gradient-to-r from-red-50 to-red-100 border border-red-300",
+            _ => "bg-gradient-to-r from-purple-50 to-indigo-50 border border-purple-200"
         };
     }
 
